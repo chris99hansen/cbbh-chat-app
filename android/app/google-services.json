@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "639044883262",
+    "project_id": "cbbhchatapp",
+    "storage_bucket": "cbbhchatapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:639044883262:android:29918aabd98ac07ba3d26f",
+        "android_client_info": {
+          "package_name": "com.cbbhchatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "639044883262-konijfaobsvb5jubs1lf9le1gcomo9dc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.cbbhchatapp",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "639044883262-mba3lj83uv4bssvh9deuoddorvpho27d.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCl5VreqLkoOQe2iaQfGwg7dY4levpZT58"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "639044883262-d17bso0hhst7269g45nv2p88lvj89f3i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
