@@ -5,7 +5,7 @@
  * @format
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
@@ -18,8 +18,9 @@ import {
   Button,
 } from 'react-native';
 
-import auth from '@react-native-firebase/auth';
+import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import getAuth from '@react-native-firebase/auth';
+
 
 import {
   GoogleSignin,
@@ -46,27 +47,63 @@ async function onGoogleButtonPress() {
 
 function App(): JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-
   
-
-  return (
-    <SafeAreaView>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic">
-          <Button
-      title="Google Sign-In"
-      onPress={() => onGoogleButtonPress()}
-    />
-
-      </ScrollView>
-    </SafeAreaView>
-  );
+  //taken from rnfirebase.io
+  const [user, setUser] = useState();
+  
+  //taken from rnfirebase.io
+  // Handle user state changes
+  function onAuthStateChanged(user: any) {
+    setUser(user);
+  }
+  //taken from rnfirebase.io
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged((user) => {
+      if(user){
+        //logged in
+        onAuthStateChanged(user);
+      }
+    });
+    return subscriber; // unsubscribe on unmount
+  }, []);
+  
+  
+  if (!user) {
+    return (
+      <SafeAreaView>
+        <StatusBar
+          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+        />
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic">
+          <Text style ={styles.loginMessage} >Login to start chatting</Text>
+            <Button title="Google Sign-In"
+              onPress={() => onGoogleButtonPress()}
+            />
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }else{
+    const firebaseUser = firebase.auth().currentUser;
+    if (firebaseUser){
+      return (<SafeAreaView><Text>you are logged in {firebaseUser.email}</Text></SafeAreaView>);
+    }else{
+      return (<SafeAreaView><Text>you are logged in but cannot get the auth state</Text></SafeAreaView>);
+    }
+  }
 }
 
 const styles = StyleSheet.create({
+  loginMessage: {
+    fontSize: 30,
+    paddingVertical: 40,
+    textAlign: "center",
+  },
+  loginButton: {
+    fontSize: 30,
+    paddingVertical: 40,
+    textAlign: "center",
+  },
   sectionContainer: {
     marginTop: 32,
     paddingHorizontal: 24,
