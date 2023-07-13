@@ -13,14 +13,18 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
   Button,
 } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack'
+const Stack = createStackNavigator()
 
 import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import getAuth from '@react-native-firebase/auth';
-
+import firestore from '@react-native-firebase/firestore';
+//const db = firestore();
+import Rooms from "./screens/Rooms";
 
 import {
   GoogleSignin,
@@ -46,7 +50,6 @@ async function onGoogleButtonPress() {
 }
 
 function App(): JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
   
   //taken from rnfirebase.io
   const [user, setUser] = useState();
@@ -70,23 +73,23 @@ function App(): JSX.Element {
   
   if (!user) {
     return (
-      <SafeAreaView>
-        <StatusBar
-          barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        />
-        <ScrollView
-          contentInsetAdjustmentBehavior="automatic">
+      <SafeAreaView style={styles.view}>
           <Text style ={styles.loginMessage} >Login to start chatting</Text>
             <Button title="Google Sign-In"
               onPress={() => onGoogleButtonPress()}
             />
-        </ScrollView>
       </SafeAreaView>
     );
   }else{
     const firebaseUser = firebase.auth().currentUser;
-    if (firebaseUser){
-      return (<SafeAreaView><Text>you are logged in {firebaseUser.email}</Text></SafeAreaView>);
+    if (firebaseUser){             
+      return (
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Chat Rooms" component={Rooms} ></Stack.Screen>
+        </Stack.Navigator>
+      </NavigationContainer>
+      );
     }else{
       return (<SafeAreaView><Text>you are logged in but cannot get the auth state</Text></SafeAreaView>);
     }
@@ -94,8 +97,13 @@ function App(): JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  view: {
+    flex: 1,
+    backgroundColor: (`#ffffff`),
+  },
   loginMessage: {
     fontSize: 30,
+    color: (`#000000`),
     paddingVertical: 40,
     textAlign: "center",
   },
