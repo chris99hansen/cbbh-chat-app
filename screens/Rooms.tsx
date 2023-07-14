@@ -9,16 +9,14 @@ import {
     useColorScheme,
     RefreshControl,
 } from 'react-native';
-import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import { useNavigation } from '@react-navigation/native';
 
 
 
-
-
-
-export default function ScreenA() {
+export default function Screen() {
     const [refreshing, setRefreshing] = React.useState(false);
+    const navigation = useNavigation();
     
     function onRefresh(): void {
         setRefreshing(false)
@@ -29,12 +27,12 @@ export default function ScreenA() {
             
         <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
                 <Text style={styles.text}>Chat1</Text>
                 <Text style={styles.textInfo}>Chat1</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.button}>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
                 <Text style={styles.text}>Chat2</Text>
             </TouchableOpacity>
         </ScrollView>        

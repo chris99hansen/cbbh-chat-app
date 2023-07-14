@@ -22,9 +22,9 @@ const Stack = createStackNavigator()
 
 import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import getAuth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
-//const db = firestore();
+
 import Rooms from "./screens/Rooms";
+import Chat1 from "./screens/Chat1";
 
 import {
   GoogleSignin,
@@ -87,6 +87,8 @@ function App(): JSX.Element {
       <NavigationContainer>
         <Stack.Navigator>
           <Stack.Screen name="Chat Rooms" component={Rooms} ></Stack.Screen>
+          <Stack.Screen name="Chat1" component={Chat1} ></Stack.Screen>
+          <Stack.Screen name="Chat2" component={Chat1} ></Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
       );
