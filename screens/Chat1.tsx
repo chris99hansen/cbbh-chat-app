@@ -3,13 +3,14 @@ import {
     StyleSheet,
     View,
     Text,
-    Pressable,
     SafeAreaView,
-    StatusBar,
-    useColorScheme,
     RefreshControl,
+    Image,
+    FlatList,
+    TextInput, 
+    TouchableOpacity,
+    Alert
 } from 'react-native';
-import { FlatList, ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import firestore from '@react-native-firebase/firestore';
 
 interface message {
@@ -21,21 +22,35 @@ interface message {
 const db = firestore();
 const query = db.collection('chat1').orderBy("date","desc").limit(50)
 
-
 export default function Screen({navigation}: any) {
 
     const [data, setData] = useState<message[]>([])
-    const [refreshing, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] = useState(true);
+    const [text, setText] = useState("");
     
-    useEffect(() => {const observer = query.onSnapshot(querySnapshot => {
+    useEffect(() => {
+        const observer = query.onSnapshot(querySnapshot => {
+        setRefreshing(false);
         querySnapshot.docChanges().forEach(element => {
-            if(element.type === "added"){
-                
-                setData(current => [...current, {email: element.doc.data().email,
-                                                msg: element.doc.data().msg, 
-                                                date: new Date(element.doc.data().date.toDate() as Date)}])
-                console.log(element.doc.data().email)
+            if(element.type === "added" && element.doc.data().date != null){
+                //TODO add comment about this
+                if(data.length > 0 && new Date(element.doc.data().date.toDate() as Date) > data[data.length - 1].date){
+                    setData(current => [...current, {email: element.doc.data().email,
+                                        msg: element.doc.data().msg, 
+                                        date: new Date(element.doc.data().date.toDate() as Date)}])
+                }else{
+                    setData(current => [{email: element.doc.data().email,
+                        msg: element.doc.data().msg, 
+                        date: new Date(element.doc.data().date.toDate() as Date)},...current])
+                }
+            }else{
+                if(element.type === "modified"){
+                    setData(current => [...current, {email: element.doc.data().email,
+                                        msg: element.doc.data().msg, 
+                                        date: new Date(element.doc.data().date.toDate() as Date)}])
+                }
             }
+            
         });
         console.log(`Received query snapshot of size ${querySnapshot.size}`);
       }, err => {
@@ -44,13 +59,22 @@ export default function Screen({navigation}: any) {
     }, []);
     
     function onRefresh(): void {
-        setRefreshing(true)
-
+        if(data.length > 0){
+            //TODO fix small bug where if 2 or more messages were sent at the EXACT same time they will be skipped
+            firestore().collection("chat1").where("date","<",data[0].date).orderBy("date","desc").limit(10).get().then(docs =>{
+                docs.forEach(element => {
+                    setData(current => [{email: element.data().email,
+                        msg: element.data().msg, 
+                        date: new Date(element.data().date.toDate() as Date)},...current])
+                
+                });
+            })
+        }
         setRefreshing(false)
     }
 
     return (<SafeAreaView style={styles.SafeAreaView}>
-        <View style={styles.view}>
+        <View style={{flex: 8}}>
             
         <FlatList style={styles.scroll}
         data={data}
@@ -64,6 +88,57 @@ export default function Screen({navigation}: any) {
             </View>)
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}/>
+        </View>
+        <View style={{flex: 2,flexDirection:'row', backgroundColor: "#ffffff"}}>
+                <View style={[{flexDirection:'row', flex:1}]}>
+                    <TouchableOpacity style={[{ flex:1}]} activeOpacity={0.5} onPress={() => {}}>
+                        <Image
+                        source={require('../images/imgIcon.png')}
+                        style={{
+                            maxHeight: "100%",
+                            maxWidth: "100%",
+                            resizeMode: "contain"}}
+                        />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={[{flex:3,flexDirection:'row',borderStyle: "solid", borderWidth: 1,borderRadius:10,margin:10}]}>
+                    
+                    <TextInput editable multiline style={[{minHeight:"100%",minWidth:"100%",maxHeight: "100%",maxWidth: "100%",color:"#000000"}]} 
+                    onChangeText={newText => setText(newText)}
+                    value={text}
+                    />
+                </View>
+
+
+                <View style={[{flexDirection:'row',flex:1}]}>
+                    <TouchableOpacity style={[{flex:1}]} activeOpacity={0.5} onPress={() => {
+                        if(text.length > 0){
+                            const timestamp = firestore.FieldValue.serverTimestamp();
+                            firestore()
+                            .collection('chat1')
+                            .add({
+                                date: timestamp,
+                                email: "chris99hansen@gmail.com",
+                                msg: text
+                            })
+                            setText("");
+                        }else{
+                            Alert.alert("","You cannot send an empty message",[{text:"ok"}])
+                        }
+                    }}>
+                        <Image
+                        source={require('../images/sendIcon.png')}
+                        style={{
+                            maxHeight: "100%",
+                            maxWidth: "100%",
+                            resizeMode: "contain"}}
+                        />
+                    </TouchableOpacity>
+                    
+                </View>
+                
+            
         </View>
         </SafeAreaView>)
 }
@@ -96,12 +171,18 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: (`#a9a9a9`),
     },
+    inputView:{
+        minHeight: "10%",
+        maxHeight: "20%",
+        width: "100%",
+        flexDirection:'row',
+        backgroundColor: (`#a9a9a9`),
+    },
     view: {
         flex: 1,
+        width: "100%",
+        maxHeight: "90%",
         backgroundColor: (`#a9a9a9`),
-        borderRadius: 25,
-        margin:20,
-        overflow: "hidden",
     },
     button: {
         paddingVertical: 20,
