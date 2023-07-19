@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {
     StyleSheet,
     View,
@@ -9,14 +10,21 @@ import {
     FlatList,
     TextInput, 
     TouchableOpacity,
-    Alert
+    Alert,
+    DimensionValue,
+    Dimensions
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
+import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
+import storage from '@react-native-firebase/storage';
 
 interface message {
     email: string;
     msg: string;
+    img: string;
     date: Date;
+    height: number;
+    width: number;
 }
 //firebase.firestore.FieldValue.serverTimestamp()
 const db = firestore();
@@ -35,19 +43,34 @@ export default function Screen({navigation}: any) {
             if(element.type === "added" && element.doc.data().date != null){
                 //TODO add comment about this
                 if(data.length > 0 && new Date(element.doc.data().date.toDate() as Date) > data[data.length - 1].date){
-                    setData(current => [...current, {email: element.doc.data().email,
-                                        msg: element.doc.data().msg, 
-                                        date: new Date(element.doc.data().date.toDate() as Date)}])
-                }else{
-                    setData(current => [{email: element.doc.data().email,
+                    setData(current => [...current, {
+                        email: element.doc.data().email,
                         msg: element.doc.data().msg, 
-                        date: new Date(element.doc.data().date.toDate() as Date)},...current])
+                        date: new Date(element.doc.data().date.toDate() as Date),
+                        img: element.doc.data().img,
+                        height: element.doc.data().height,
+                        width: element.doc.data().width
+                    }])
+                }else{
+                    setData(current => [{
+                        email: element.doc.data().email,
+                        msg: element.doc.data().msg, 
+                        date: new Date(element.doc.data().date.toDate() as Date),
+                        img: element.doc.data().img,
+                        height: element.doc.data().height,
+                        width: element.doc.data().width
+                        },...current])
                 }
             }else{
                 if(element.type === "modified"){
-                    setData(current => [...current, {email: element.doc.data().email,
-                                        msg: element.doc.data().msg, 
-                                        date: new Date(element.doc.data().date.toDate() as Date)}])
+                    setData(current => [...current, {
+                        email: element.doc.data().email,
+                        msg: element.doc.data().msg, 
+                        date: new Date(element.doc.data().date.toDate() as Date),
+                        img: element.doc.data().img,
+                        height: element.doc.data().height,
+                        width: element.doc.data().width
+                    }])
                 }
             }
             
@@ -63,9 +86,14 @@ export default function Screen({navigation}: any) {
             //TODO fix small bug where if 2 or more messages were sent at the EXACT same time they will be skipped
             firestore().collection("chat1").where("date","<",data[0].date).orderBy("date","desc").limit(10).get().then(docs =>{
                 docs.forEach(element => {
-                    setData(current => [{email: element.data().email,
+                    setData(current => [{
+                        email: element.data().email,
                         msg: element.data().msg, 
-                        date: new Date(element.data().date.toDate() as Date)},...current])
+                        date: new Date(element.data().date.toDate() as Date),
+                        img: element.data().img,
+                        height: element.data().height,
+                        width: element.data().width
+                    },...current])
                 
                 });
             })
@@ -75,23 +103,82 @@ export default function Screen({navigation}: any) {
 
     return (<SafeAreaView style={styles.SafeAreaView}>
         <View style={{flex: 8}}>
-            
+        {/*Flat list of messages */}
         <FlatList style={styles.scroll}
         data={data}
-        renderItem={item =>(
-            <View>
+        renderItem={item =>{if(item.item.img === ""){
+        {/* No image*/}
+            return((
                 <View style={styles.messageBoxOthers}>
                     <Text style={styles.messageText}>date: {item.item.date.toLocaleString()}</Text>
                     <Text style={styles.messageText}>email: {item.item.email}</Text>
                     <Text style={styles.messageText}>message: {item.item.msg}</Text>
+                </View>))
+        }else{
+            {/* With image*/}
+            console.log("update")
+            return((
+                <View style={styles.messageBoxOthers}>
+                    <Text style={styles.messageText}>date: {item.item.date.toLocaleString()}</Text>
+                    <Text style={styles.messageText}>email: {item.item.email}</Text>
+                    <Text style={styles.messageText}>message: {item.item.msg}</Text>
+                    <Image  style={{
+                        height: 400,
+                        width: item.item.width,
+                        maxWidth: "100%",
+                        maxHeight: 400,
+                        resizeMode: "contain",
+                        alignSelf: "center"}}
+                        source={{uri: item.item.img}}/>
+                    <Text>test</Text>
                 </View>
-            </View>)
+            ))
+        }}
         }
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}/>
         </View>
+
+        {/*Send image button */}
         <View style={{flex: 2,flexDirection:'row', backgroundColor: "#ffffff"}}>
                 <View style={[{flexDirection:'row', flex:1}]}>
-                    <TouchableOpacity style={[{ flex:1}]} activeOpacity={0.5} onPress={() => {}}>
+                    <TouchableOpacity style={[{ flex:1}]} activeOpacity={0.5} onPress={() => {
+                        Alert.alert("","Upload image from",[
+                            {text:"Cancel"},
+                            {text:"Camera", onPress: () =>{
+                                launchCamera({mediaType: "photo",quality: 0.5}, (img) =>{
+                                    if (!img.didCancel){
+                                        img.assets?.forEach(asset =>{
+                                            const timestamp = firestore.FieldValue.serverTimestamp();
+                                            const ref = storage().ref(Date.now().toString()+firebase.auth().currentUser?.email)
+                                            if(asset.uri){
+                                                const task = ref.putFile(asset.uri);
+                                                task.then(() => {
+                                                    ref.getDownloadURL().then((link) =>{
+                                                    firestore()
+                                                    .collection('chat1')
+                                                    .add({
+                                                        date: timestamp,
+                                                        email: firebase.auth().currentUser?.email,
+                                                        msg: text,
+                                                        img: link,
+                                                        height: asset.height,
+                                                        width: asset.width,
+                                                    })
+                                                    setText("");
+                                                    })
+                                                })
+                                            }else{
+                                                Alert.alert("","Error occured with the image",[{text:"ok"}])
+                                            }
+                                            
+                                        });
+                                    }
+                                });
+                            }},
+                            {text:"Gallery", onPress: () =>{
+
+                            }}])
+                    }}>
                         <Image
                         source={require('../images/imgIcon.png')}
                         style={{
@@ -102,6 +189,7 @@ export default function Screen({navigation}: any) {
                     </TouchableOpacity>
                 </View>
 
+                {/*Textinput field*/}
                 <View style={[{flex:3,flexDirection:'row',borderStyle: "solid", borderWidth: 1,borderRadius:10,margin:10}]}>
                     
                     <TextInput editable multiline style={[{minHeight:"100%",minWidth:"100%",maxHeight: "100%",maxWidth: "100%",color:"#000000"}]} 
@@ -110,7 +198,7 @@ export default function Screen({navigation}: any) {
                     />
                 </View>
 
-
+                {/*Send message button */}
                 <View style={[{flexDirection:'row',flex:1}]}>
                     <TouchableOpacity style={[{flex:1}]} activeOpacity={0.5} onPress={() => {
                         if(text.length > 0){
@@ -119,8 +207,9 @@ export default function Screen({navigation}: any) {
                             .collection('chat1')
                             .add({
                                 date: timestamp,
-                                email: "chris99hansen@gmail.com",
-                                msg: text
+                                email: firebase.auth().currentUser?.email,
+                                msg: text,
+                                img: ""
                             })
                             setText("");
                         }else{
@@ -194,13 +283,13 @@ const styles = StyleSheet.create({
     scroll: {
         flex: 1,
         backgroundColor: (`#ffffff`),
-        borderRadius: 1,
     },
     messageBoxOthers: {
         marginTop: 10,
         marginLeft: 10,
         borderWidth: 1,
         borderStyle: "solid",
+        borderRadius: 10,
         maxWidth: "80%",
     },
     messageBoxYou: {
@@ -208,6 +297,7 @@ const styles = StyleSheet.create({
         marginLeft: 10,
         borderWidth: 1,
         borderStyle: "solid",
+        borderRadius: 10,
         maxWidth: "80%",
     },
 })
