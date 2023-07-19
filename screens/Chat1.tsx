@@ -17,6 +17,7 @@ import {
 import firestore from '@react-native-firebase/firestore';
 import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
+import { FlashList } from "@shopify/flash-list";
 
 interface message {
     email: string;
@@ -103,8 +104,9 @@ export default function Screen({navigation}: any) {
 
     return (<SafeAreaView style={styles.SafeAreaView}>
         <View style={{flex: 8}}>
-        {/*Flat list of messages */}
-        <FlatList style={styles.scroll}
+        {/*FlashList of messages */}
+        <FlashList
+        estimatedItemSize={2}
         data={data}
         renderItem={item =>{if(item.item.img === ""){
         {/* No image*/}
@@ -258,7 +260,7 @@ const styles = StyleSheet.create({
     },
     SafeAreaView: {
         flex: 1,
-        backgroundColor: (`#a9a9a9`),
+        backgroundColor: (`#ffffff`),
     },
     inputView:{
         minHeight: "10%",
