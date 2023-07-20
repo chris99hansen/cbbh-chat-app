@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     StyleSheet,
     View,
@@ -9,35 +9,74 @@ import {
     useColorScheme,
     RefreshControl,
 } from 'react-native';
+import firestore from '@react-native-firebase/firestore';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import { FlashList } from '@shopify/flash-list';
 
+const db = firestore();
+const query = db.collection('chats')
 
+interface chat {
+    name: string;
+    date: Date;
+}
 
 export default function Screen() {
-    const [refreshing, setRefreshing] = React.useState(false);
+    const [chats, setChats] = useState<chat[]>([])
+    const [refreshing, setRefreshing] = React.useState(true);
     const navigation = useNavigation();
     
     function onRefresh(): void {
-        setRefreshing(false)
+        setRefreshing(true)
+        setChats([]);
+        query.get().then(docs =>{
+        docs.forEach(doc => {
+            firestore().collection(doc.data().chat).orderBy("date","desc").limit(1).get().then(foundChat => {
+                foundChat.forEach(element =>{
+                    setChats(oldData => [...oldData,{name: doc.data().chat, date: new Date(element.data().date.toDate() as Date)}])
+                })
+                setChats(data => [...data].sort((a,b) => b.date.getTime() - a.date.getTime()));
+                setRefreshing(false)
+            })
+        })
+        })
     }
 
-    return (<SafeAreaView style={styles.SafeAreaView}>
-        <View style={styles.view}>
-            
-        <ScrollView contentInsetAdjustmentBehavior="automatic" style={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
-                <Text style={styles.text}>Chat1</Text>
-                <Text style={styles.textInfo}>Chat1</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
-                <Text style={styles.text}>Chat2</Text>
-            </TouchableOpacity>
-        </ScrollView>        
+    useEffect(() => {
+        setChats([]);
+        query.get().then(docs =>{
+        docs.forEach(doc => {
+            firestore().collection(doc.data().chat).orderBy("date","desc").limit(1).get().then(foundChat => {
+                foundChat.forEach(element =>{
+                    setChats(oldData => [...oldData,{name: doc.data().chat, date: new Date(element.data().date.toDate() as Date)}])
+                })
+                setChats(data => [...data].sort((a,b) => b.date.getTime() - a.date.getTime()));
+                setRefreshing(false)
+            })
+        })
         
-        </View>
+        })
+    }, []);
+
+
+    
+
+    return (<SafeAreaView style={styles.SafeAreaView}>
+        <FlashList 
+        estimatedItemSize={8}
+        data={chats}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        renderItem={item => {
+            return(
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
+                <Text style={styles.text}>{item.item.name}</Text>
+                <Text style={styles.textInfo}>last message send at {item.item.date.toLocaleString()}</Text>
+            </TouchableOpacity>
+            )
+        }}
+        />
+        
         </SafeAreaView>)
 }
 
@@ -63,14 +102,7 @@ const styles = StyleSheet.create({
     },
     SafeAreaView: {
         flex: 1,
-        backgroundColor: (`#a9a9a9`),
-    },
-    view: {
-        flex: 1,
-        backgroundColor: (`#a9a9a9`),
-        borderRadius: 25,
-        margin:20,
-        overflow: "hidden",
+        backgroundColor: (`#FFFFFF`),
     },
     button: {
         paddingVertical: 20,

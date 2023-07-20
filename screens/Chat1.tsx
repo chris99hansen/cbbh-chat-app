@@ -7,11 +7,9 @@ import {
     SafeAreaView,
     RefreshControl,
     Image,
-    FlatList,
     TextInput, 
     TouchableOpacity,
     Alert,
-    DimensionValue,
     Dimensions
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
@@ -119,16 +117,21 @@ export default function Screen({navigation}: any) {
         }else{
             {/* With image*/}
             console.log("update")
+
+            //calculate resized height 
+            const {height, width} = Dimensions.get('window');
+            const ratio = item.item.width/item.item.height;
+            const imgHeight = (width*0.8)*ratio;
+
             return((
                 <View style={styles.messageBoxOthers}>
                     <Text style={styles.messageText}>date: {item.item.date.toLocaleString()}</Text>
                     <Text style={styles.messageText}>email: {item.item.email}</Text>
                     <Text style={styles.messageText}>message: {item.item.msg}</Text>
                     <Image  style={{
-                        height: 400,
+                        height: imgHeight,
                         width: item.item.width,
                         maxWidth: "100%",
-                        maxHeight: 400,
                         resizeMode: "contain",
                         alignSelf: "center"}}
                         source={{uri: item.item.img}}/>
