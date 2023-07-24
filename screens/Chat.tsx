@@ -160,7 +160,8 @@ export default function Screen({ route, navigation }: Props) {
                         Alert.alert("","Upload image from",[
                             {text:"Cancel"},
                             {text:"Camera", onPress: () =>{
-                                launchCamera({mediaType: "photo",quality: 0.5}, (img) =>{
+                                {/*Send image from camera */}
+                                launchCamera({mediaType: "photo"}, (img) =>{
                                     if (!img.didCancel){
                                         img.assets?.forEach(asset =>{
                                             const timestamp = firestore.FieldValue.serverTimestamp();
@@ -191,7 +192,36 @@ export default function Screen({ route, navigation }: Props) {
                                 });
                             }},
                             {text:"Gallery", onPress: () =>{
-
+                                {/*Send image from Gallery */}
+                                launchImageLibrary({mediaType: "photo", selectionLimit: 1}, (img) =>{
+                                    if (!img.didCancel){
+                                        img.assets?.forEach(asset =>{
+                                            const timestamp = firestore.FieldValue.serverTimestamp();
+                                            const ref = storage().ref(Date.now().toString()+firebase.auth().currentUser?.email)
+                                            if(asset.uri){
+                                                const task = ref.putFile(asset.uri);
+                                                task.then(() => {
+                                                    ref.getDownloadURL().then((link) =>{
+                                                    firestore()
+                                                    .collection(route.params.name)
+                                                    .add({
+                                                        date: timestamp,
+                                                        email: firebase.auth().currentUser?.email,
+                                                        msg: text,
+                                                        img: link,
+                                                        height: asset.height,
+                                                        width: asset.width,
+                                                    })
+                                                    setText("");
+                                                    })
+                                                })
+                                            }else{
+                                                Alert.alert("","Error occured with the image",[{text:"ok"}])
+                                            }
+                                            
+                                        });
+                                    }
+                                });
                             }}])
                     }}>
                         <Image
