@@ -17,14 +17,15 @@ import {
   Button,
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack'
-const Stack = createStackNavigator()
+import { createStackNavigator } from '@react-navigation/stack';
+
+
 
 import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import getAuth from '@react-native-firebase/auth';
 
 import Rooms from "./screens/Rooms";
-import Chat1 from "./screens/Chat1";
+import Chat from "./screens/Chat";
 
 import {
   GoogleSignin,
@@ -48,7 +49,11 @@ async function onGoogleButtonPress() {
   // Sign-in the user with the credential
   return auth().signInWithCredential(googleCredential);
 }
-
+export type RootStackParamList = {
+  Rooms: undefined, // undefined because I am not passing any params to the home screen
+  Chat: { name: string }; 
+};
+const Stack = createStackNavigator<RootStackParamList>()
 function App(): JSX.Element {
   
   //taken from rnfirebase.io
@@ -85,10 +90,11 @@ function App(): JSX.Element {
     if (firebaseUser){             
       return (
       <NavigationContainer>
-        <Stack.Navigator>
-          <Stack.Screen name="Chat Rooms" component={Rooms} ></Stack.Screen>
-          <Stack.Screen name="Chat1" component={Chat1} ></Stack.Screen>
-          <Stack.Screen name="Chat2" component={Chat1} ></Stack.Screen>
+        <Stack.Navigator
+        initialRouteName="Rooms"
+        >
+          <Stack.Screen name="Rooms" component={Rooms} ></Stack.Screen>
+          <Stack.Screen name="Chat" component={Chat} ></Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
       );

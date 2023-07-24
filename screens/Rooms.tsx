@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { RootStackParamList } from '../App';
 import {
     StyleSheet,
     View,
@@ -11,8 +12,8 @@ import {
 } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 const db = firestore();
 const query = db.collection('chats')
@@ -22,10 +23,17 @@ interface chat {
     date: Date;
 }
 
-export default function Screen() {
+type ScreenNavigationProp = StackNavigationProp<
+    RootStackParamList,
+    'Rooms'
+>;
+type Props = {
+    navigation: ScreenNavigationProp;
+};
+
+export default function Screen({navigation}: Props) {
     const [chats, setChats] = useState<chat[]>([])
     const [refreshing, setRefreshing] = React.useState(true);
-    const navigation = useNavigation();
     
     function onRefresh(): void {
         setRefreshing(true)
@@ -69,9 +77,10 @@ export default function Screen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         renderItem={item => {
             return(
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Chat1' as never)}>
+            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Chat", { name: item.item.name})}>
                 <Text style={styles.text}>{item.item.name}</Text>
-                <Text style={styles.textInfo}>last message send at {item.item.date.toLocaleString()}</Text>
+                <Text style={styles.textInfo}>last message send at</Text>
+                <Text style={styles.textInfo}>{item.item.date.toLocaleString()}</Text>
             </TouchableOpacity>
             )
         }}
@@ -95,6 +104,7 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: 'bold',
         margin: 10,
+        textAlign: "center",
         color: (`#000000`),
         textShadowColor:'#585858',
         textShadowOffset:{width: 1, height: 1},

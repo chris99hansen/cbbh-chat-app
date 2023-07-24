@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RootStackParamList } from '../App';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import {
     StyleSheet,
@@ -16,6 +17,8 @@ import firestore from '@react-native-firebase/firestore';
 import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
 import storage from '@react-native-firebase/storage';
 import { FlashList } from "@shopify/flash-list";
+import { RouteProp } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 interface message {
     email: string;
@@ -27,16 +30,25 @@ interface message {
 }
 //firebase.firestore.FieldValue.serverTimestamp()
 const db = firestore();
-const query = db.collection('chat1').orderBy("date","desc").limit(50)
 
-export default function Screen({navigation}: any) {
+type ScreenNavigationProp = StackNavigationProp<
+    RootStackParamList,
+    'Chat'
+>;
+type ScreenRouteProp = RouteProp<RootStackParamList, 'Chat'>;
+type Props = {
+    navigation: ScreenNavigationProp;
+    route: ScreenRouteProp;
+};
 
+export default function Screen({ route, navigation }: Props) {
     const [data, setData] = useState<message[]>([])
     const [refreshing, setRefreshing] = useState(true);
     const [text, setText] = useState("");
     
     useEffect(() => {
-        const observer = query.onSnapshot(querySnapshot => {
+        navigation.setOptions({ title: route.params.name })
+        const observer = db.collection(route.params.name).orderBy("date","desc").limit(50).onSnapshot(querySnapshot => {
         setRefreshing(false);
         querySnapshot.docChanges().forEach(element => {
             if(element.type === "added" && element.doc.data().date != null){
@@ -74,7 +86,6 @@ export default function Screen({navigation}: any) {
             }
             
         });
-        console.log(`Received query snapshot of size ${querySnapshot.size}`);
       }, err => {
         console.log(`Encountered error: ${err}`);
       });
@@ -83,7 +94,7 @@ export default function Screen({navigation}: any) {
     function onRefresh(): void {
         if(data.length > 0){
             //TODO fix small bug where if 2 or more messages were sent at the EXACT same time they will be skipped
-            firestore().collection("chat1").where("date","<",data[0].date).orderBy("date","desc").limit(10).get().then(docs =>{
+            firestore().collection(route.params.name).where("date","<",data[0].date).orderBy("date","desc").limit(10).get().then(docs =>{
                 docs.forEach(element => {
                     setData(current => [{
                         email: element.data().email,
@@ -116,7 +127,6 @@ export default function Screen({navigation}: any) {
                 </View>))
         }else{
             {/* With image*/}
-            console.log("update")
 
             //calculate resized height 
             const {height, width} = Dimensions.get('window');
@@ -160,7 +170,7 @@ export default function Screen({navigation}: any) {
                                                 task.then(() => {
                                                     ref.getDownloadURL().then((link) =>{
                                                     firestore()
-                                                    .collection('chat1')
+                                                    .collection(route.params.name)
                                                     .add({
                                                         date: timestamp,
                                                         email: firebase.auth().currentUser?.email,
@@ -209,7 +219,7 @@ export default function Screen({navigation}: any) {
                         if(text.length > 0){
                             const timestamp = firestore.FieldValue.serverTimestamp();
                             firestore()
-                            .collection('chat1')
+                            .collection(route.params.name)
                             .add({
                                 date: timestamp,
                                 email: firebase.auth().currentUser?.email,
