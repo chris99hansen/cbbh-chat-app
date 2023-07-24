@@ -32,35 +32,12 @@ import {
   GoogleSigninButton,
   statusCodes,
 } from '@react-native-google-signin/google-signin';
-import { LoginManager, AccessToken, Settings  } from 'react-native-fbsdk-next';
 
-Settings.setAppID('261599566599494');
 
 
 GoogleSignin.configure({
   webClientId: "639044883262-mba3lj83uv4bssvh9deuoddorvpho27d.apps.googleusercontent.com",
 });
-async function onFacebookButtonPress() {
-  // Attempt login with permissions
-  const result = await LoginManager.logInWithPermissions(['public_profile', 'email']);
-
-  if (result.isCancelled) {
-    throw 'User cancelled the login process';
-  }
-
-  // Once signed in, get the users AccessToken
-  const data = await AccessToken.getCurrentAccessToken();
-
-  if (!data) {
-    throw 'Something went wrong obtaining access token';
-  }
-
-  // Create a Firebase credential with the AccessToken
-  const facebookCredential = auth.FacebookAuthProvider.credential(data.accessToken);
-
-  // Sign-in the user with the credential
-  return auth().signInWithCredential(facebookCredential);
-}
 
 async function onGoogleButtonPress() {
   // Check if your device supports Google Play
@@ -91,7 +68,6 @@ function App(): JSX.Element {
   }
   //taken from rnfirebase.io
   useEffect(() => {
-    Settings.initializeSDK();
     const subscriber = auth().onAuthStateChanged((user) => {
       if(user){
         //logged in
@@ -108,9 +84,6 @@ function App(): JSX.Element {
           <Text style ={styles.loginMessage} >Login to start chatting</Text>
             <Button title="Google Sign-In"
               onPress={() => onGoogleButtonPress()}
-            />
-            <Button title="Facebook Sign-In"
-              onPress={() => onFacebookButtonPress()}
             />
       </SafeAreaView>
     );
