@@ -1,76 +1,47 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
 import React, { useState, useEffect } from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-  Button,
-} from 'react-native';
+import { SafeAreaView, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-
-
-
-import auth, { FirebaseAuthTypes, firebase } from '@react-native-firebase/auth';
-import getAuth from '@react-native-firebase/auth';
-
+import auth, { firebase } from '@react-native-firebase/auth';
 import Rooms from "./screens/Rooms";
 import Chat from "./screens/Chat";
-
-import {
-  GoogleSignin,
-  GoogleSigninButton,
-  statusCodes,
-} from '@react-native-google-signin/google-signin';
-
-
+import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 
 GoogleSignin.configure({
   webClientId: "639044883262-mba3lj83uv4bssvh9deuoddorvpho27d.apps.googleusercontent.com",
 });
 
 async function onGoogleButtonPress() {
-  // Check if your device supports Google Play
+  // check if your device supports Google Play
   await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-  // Get the users ID token
+  // get the users ID token
   const { idToken } = await GoogleSignin.signIn();
 
-  // Create a Google credential with the token
+  // create a Google credential with the token
   const googleCredential = auth.GoogleAuthProvider.credential(idToken);
 
-  // Sign-in the user with the credential
+  // sign-in the user with the credential
   return auth().signInWithCredential(googleCredential);
 }
+
 export type RootStackParamList = {
-  Rooms: undefined, // undefined because I am not passing any params to the home screen
+  Rooms: undefined, // undefined as no params are passed
   Chat: { name: string }; 
 };
+
 const Stack = createStackNavigator<RootStackParamList>()
+
 function App(): JSX.Element {
-  
-  //taken from rnfirebase.io
   const [user, setUser] = useState();
   
-  //taken from rnfirebase.io
-  // Handle user state changes
+  // handle user state changes
   function onAuthStateChanged(user: any) {
     setUser(user);
   }
-  //taken from rnfirebase.io
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged((user) => {
-      if(user){
-        //logged in
+      if (user) {
+        // logged in
         onAuthStateChanged(user);
       }
     });
@@ -79,64 +50,41 @@ function App(): JSX.Element {
   
   
   if (!user) {
+    // show login buttons
     return (
-      <SafeAreaView style={styles.view}>
-          <Text style ={styles.loginMessage} >Login to start chatting</Text>
-            <Button title="Google Sign-In"
-              onPress={() => onGoogleButtonPress()}
+      <SafeAreaView style = {{ flex: 1,backgroundColor: (`#ffffff`) }}>
+          <Text style = { styles.HeaderText } >Log in to start chatting</Text>
+            <GoogleSigninButton style = {{ alignSelf: "center" }}
+              onPress = { () => onGoogleButtonPress() }
             />
       </SafeAreaView>
     );
-  }else{
+  } else {
+    // the user is logged in, show the rooms to join
     const firebaseUser = firebase.auth().currentUser;
-    if (firebaseUser){             
+    if (firebaseUser) {             
       return (
       <NavigationContainer>
         <Stack.Navigator
-        initialRouteName="Rooms"
-        >
-          <Stack.Screen name="Rooms" component={Rooms} ></Stack.Screen>
-          <Stack.Screen name="Chat" component={Chat} ></Stack.Screen>
+        initialRouteName = "Rooms">
+          <Stack.Screen name = "Rooms" component = { Rooms } ></Stack.Screen>
+          <Stack.Screen name = "Chat" component = { Chat } ></Stack.Screen>
         </Stack.Navigator>
       </NavigationContainer>
       );
-    }else{
+    } else {
+      // the user is logged in, but there is an error
       return (<SafeAreaView><Text>you are logged in but cannot get the auth state</Text></SafeAreaView>);
     }
   }
 }
 
 const styles = StyleSheet.create({
-  view: {
-    flex: 1,
-    backgroundColor: (`#ffffff`),
-  },
-  loginMessage: {
+  HeaderText: {
     fontSize: 30,
     color: (`#000000`),
     paddingVertical: 40,
     textAlign: "center",
-  },
-  loginButton: {
-    fontSize: 30,
-    paddingVertical: 40,
-    textAlign: "center",
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
   },
 });
 

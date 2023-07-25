@@ -1,22 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { RootStackParamList } from '../App';
-import {
-    StyleSheet,
-    View,
-    Text,
-    Pressable,
-    SafeAreaView,
-    StatusBar,
-    useColorScheme,
-    RefreshControl,
-} from 'react-native';
+import { StyleSheet, Text, SafeAreaView, RefreshControl } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-const db = firestore();
-const query = db.collection('chats')
+const query = firestore().collection('chats')
 
 interface chat {
     name: string;
@@ -31,61 +21,70 @@ type Props = {
     navigation: ScreenNavigationProp;
 };
 
-export default function Screen({navigation}: Props) {
+export default function Screen({ navigation }: Props) {
+    // an array to store chats to join
     const [chats, setChats] = useState<chat[]>([])
+    // a boolean to indicate to the user that the program is loading
     const [refreshing, setRefreshing] = React.useState(true);
-    
-    function onRefresh(): void {
+
+    /*
+     * it deletes all chats stored, and finds the listed chats in the firestore collection "chats"
+     * it sorts the rooms so the top chat is the chat room with the last recieved message
+     * it returns data via side effects to be shown on screen
+    */
+    function getChats():void {
         setRefreshing(true)
         setChats([]);
-        query.get().then(docs =>{
+        query.get().then(docs => {
         docs.forEach(doc => {
-            firestore().collection(doc.data().chat).orderBy("date","desc").limit(1).get().then(foundChat => {
-                foundChat.forEach(element =>{
-                    setChats(oldData => [...oldData,{name: doc.data().chat, date: new Date(element.data().date.toDate() as Date)}])
+            firestore()
+            .collection(doc.data().chat)
+            .orderBy("date","desc")
+            .limit(1)
+            .get()
+            .then(foundChat => {
+                foundChat.forEach(element => {
+                    setChats(oldData => [...oldData, {
+                        name: doc.data().chat,
+                        date: new Date(element.data().date.toDate() as Date)
+                    }])
                 })
-                setChats(data => [...data].sort((a,b) => b.date.getTime() - a.date.getTime()));
-                setRefreshing(false)
+                setChats(data => 
+                    [...data].sort((a,b) => b.date.getTime() - a.date.getTime()));
             })
+            .finally(() =>
+                { setRefreshing(false) })
         })
         })
     }
 
-    useEffect(() => {
-        setChats([]);
-        query.get().then(docs =>{
-        docs.forEach(doc => {
-            firestore().collection(doc.data().chat).orderBy("date","desc").limit(1).get().then(foundChat => {
-                foundChat.forEach(element =>{
-                    setChats(oldData => [...oldData,{name: doc.data().chat, date: new Date(element.data().date.toDate() as Date)}])
-                })
-                setChats(data => [...data].sort((a,b) => b.date.getTime() - a.date.getTime()));
-                setRefreshing(false)
-            })
-        })
-        
-        })
-    }, []);
-
-
+    // onRefresh() is called when the user pulls down while being at the top
+    function onRefresh(): void {
+        getChats();
+    }
     
-
-    return (<SafeAreaView style={styles.SafeAreaView}>
+    // this is only called once on a mount and not on each render
+    useEffect(() => {
+        getChats();
+    }, []);
+    
+    // the view that the user sees
+    return (<SafeAreaView style = { styles.SafeAreaView }>
         <FlashList 
-        estimatedItemSize={8}
-        data={chats}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        renderItem={item => {
+        estimatedItemSize = { 8 }
+        data = { chats }
+        refreshControl = { <RefreshControl refreshing = { refreshing } onRefresh = { onRefresh } />}
+        renderItem = { item => {
+            // each chat is a big button, clicking on it will enter the chat displayed at the top
             return(
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Chat", { name: item.item.name})}>
-                <Text style={styles.text}>{item.item.name}</Text>
-                <Text style={styles.textInfo}>last message send at</Text>
-                <Text style={styles.textInfo}>{item.item.date.toLocaleString()}</Text>
+            <TouchableOpacity style = { styles.button } onPress = { () => navigation.navigate("Chat", { name: item.item.name})}>
+                <Text style = { styles.text }>{ item.item.name }</Text>
+                <Text style = { styles.textInfo }>last message send at</Text>
+                <Text style = { styles.textInfo }>{ item.item.date.toLocaleString() }</Text>
             </TouchableOpacity>
             )
         }}
         />
-        
         </SafeAreaView>)
 }
 
@@ -120,10 +119,5 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         margin: 10,
         borderRadius: 10
-    },
-    scroll: {
-        flex: 1,
-        backgroundColor: (`#ffffff`),
-        borderRadius: 1,
     },
 })
