@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RootStackParamList } from '../App';
 import {ImagePickerResponse, launchCamera, launchImageLibrary} from 'react-native-image-picker';
+import FastImage from 'react-native-fast-image'
 import {
     StyleSheet,
     View,
@@ -192,35 +193,53 @@ export default function Screen({ route, navigation }: Props) {
         refreshControl = { <RefreshControl refreshing = { refreshing } onRefresh = { onRefresh } /> }
         estimatedItemSize = { 2 }
         data = { data }
-        renderItem = { item => { if (item.item.img === "") {
-        // the message has no image
-            return((
-                <View style = {styles.messageBoxOthers}>
-                    <Text style = {styles.messageText}>date: {item.item.date.toLocaleString()}</Text>
-                    <Text style = {styles.messageText}>email: {item.item.email}</Text>
-                    <Text style = {styles.messageText}>message: {item.item.msg}</Text>
-                </View>))
-        } else {
-            // the message has an image
-            // calculate resized height for the image as to not create a lot of empty space
-            const ratio = item.item.width / item.item.height;
-            const imgHeight = (width * 0.8) * ratio; // has a flex of 8, therefore 0.8
+        renderItem = { item => { 
+            const ownMessage = firebase.auth().currentUser?.email === item.item.email
+            if (item.item.img === "") {
+            // the message has no image
+                return((
+                    <View>
+                        <Text style={{color:"#000000",alignSelf:"center", marginTop:30}}>{item.item.date.toLocaleString()}</Text>
+                        <View style = {[styles.messageBox,
+                            {alignSelf: ownMessage ? "flex-end" : "flex-start"},
+                            {backgroundColor: ownMessage ? "#0084FF" : "#E4E6EB"},
+                        ]}>
+                            <Text style = {[styles.messageText,{color: ownMessage ? "#FFFFFF" : "#000000"}]}>{item.item.msg}</Text>
+                        </View>
+                    </View>))
+            } else {
+                // the message has an image
+                // calculate resized height for the image as to not create a lot of empty space
+                const ratio = item.item.width / item.item.height;
+                const imgHeight = width * ratio * 0.8; // has a flex of 8, therefore 0.8
+                
+                return((
+                    <View>
+                        <Text style={{color:"#000000",alignSelf:"center", marginTop:30}}>{item.item.date.toLocaleString()}</Text>
+                        <View style = {[styles.messageBox,
+                            {alignSelf: ownMessage ? "flex-end" : "flex-start"},
+                            {backgroundColor: ownMessage ? "#0084FF" : "#E4E6EB"},
+                        ]}>
+                            <Text style = {[styles.messageText, 
+                                {color: ownMessage ? "#FFFFFF" : "#000000"},
+                                {height: item.item.msg==="" ?0:"auto" }
+                                ]}>{item.item.msg}</Text>
 
-            return((
-                <View style = {styles.messageBoxOthers}>
-                    <Text style = {styles.messageText}>date: {item.item.date.toLocaleString()}</Text>
-                    <Text style = {styles.messageText}>email: {item.item.email}</Text>
-                    <Text style = {styles.messageText}>message: {item.item.msg}</Text>
-                    <Image  style = {{
-                        height: imgHeight,
-                        width: item.item.width,
-                        maxWidth: "100%",
-                        resizeMode: "contain",
-                        alignSelf: "center"}}
-                        source = {{ uri: item.item.img }}/>
-                </View>
-            ))
-        }}
+                            <FastImage  style = {{
+                                height: imgHeight,
+                                width: item.item.width,
+                                maxWidth: "100%",
+                                alignSelf: "center"}}
+                                source={{
+                                    uri: item.item.img,
+                                    priority: FastImage.priority.normal,
+                                }}
+                                resizeMode={FastImage.resizeMode.contain}
+                                />
+                        </View>
+                    </View>
+                ))
+            }}
         }
         // end of flashlist and message area view
         />
@@ -229,7 +248,7 @@ export default function Screen({ route, navigation }: Props) {
         
         {/* send image button */}
         <View style = {{ backgroundColor: "#ffffff", height:(height/10*1) }}>
-            <View style = {[{ flexDirection:'row', flex:1 }]}>
+            <View style = {[{ flexDirection:'row', flex:1, marginLeft:6}]}>
                 <View style = {[{ flexDirection:'row', flex:1 }]}>
                     <TouchableOpacity style = {[{ flex:1 }]} activeOpacity = { 0.5 } onPress = {() => {
                         Alert.alert("","Upload image from", [
@@ -261,14 +280,18 @@ export default function Screen({ route, navigation }: Props) {
 
                 {/* Text Input border */}
                 <View style = { styles.TextInputBorder}>
+                    <TextInput
+                    placeholder='Aa'
+                    placeholderTextColor={"#000000"}
                     
-                    <TextInput editable = { isEditable } multiline style = { styles.TextInput } 
+                    editable = { isEditable } 
+                    multiline style = { styles.TextInput } 
                     onChangeText = { newText => setText(newText) }
                     value = { text }/>
                 </View>
 
                 {/* Send message button */}
-                <View style = {[{ flexDirection:'row',flex:1 }]}>
+                <View style = {[{ flexDirection:'row',flex:1, marginRight:4}]}>
                     <TouchableOpacity style = {[{ flex:1 }]} activeOpacity = { 0.5 } onPress = { () => {
                         setIsEditable(false);
                         sendMessage();
@@ -292,41 +315,34 @@ const styles = StyleSheet.create({
     messageText: {
         color: (`#000000`),
         marginHorizontal: 10,
+        fontSize:18,
     },
     TextInputBorder: {
         flex:6,
         flexDirection:'row',
-        borderStyle: "solid",
-        borderWidth: 1,
+        backgroundColor: "#E4E6EB99",
         borderRadius:10,
-        margin:10
+        marginHorizontal:10,
+        marginVertical:2,
     },
     TextInput: {
         minHeight:"100%",
         minWidth:"100%",
         maxHeight: "100%",
         maxWidth: "100%",
+        fontSize: 18,
         color:"#000000"
     },
     SafeAreaView: {
         flex: 1,
         backgroundColor: (`#ffffff`),
     },
-    messageBoxOthers: {
+    messageBox: {
         marginTop: 10,
-        marginLeft: 10,
-        borderWidth: 1,
-        borderStyle: "solid",
-        borderRadius: 10,
+        marginHorizontal: 10,
+        borderRadius: 30,
+        padding:1,
         maxWidth: "80%",
         overflow: "hidden"
-    },
-    messageBoxYou: {
-        marginTop: 10,
-        marginLeft: 10,
-        borderWidth: 1,
-        borderStyle: "solid",
-        borderRadius: 10,
-        maxWidth: "80%",
     },
 })

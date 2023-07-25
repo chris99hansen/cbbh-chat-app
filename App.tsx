@@ -66,7 +66,17 @@ function App(): JSX.Element {
       return (
       <NavigationContainer>
         <Stack.Navigator
-        initialRouteName = "Rooms">
+          screenOptions={{
+          headerStyle:{
+            shadowRadius:10,
+            shadowColor:"#000000"
+          },
+          headerTintColor:"#000000",
+          headerTitleAlign:"center"
+        }}
+          
+          initialRouteName = "Rooms">
+          
           <Stack.Screen name = "Rooms" component = { Rooms } ></Stack.Screen>
           <Stack.Screen name = "Chat" component = { Chat } ></Stack.Screen>
         </Stack.Navigator>
