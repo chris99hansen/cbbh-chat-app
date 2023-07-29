@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text } from 'react-native';
+import { Button, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import auth, { firebase } from '@react-native-firebase/auth';
 import Rooms from "./screens/Rooms";
 import Chat from "./screens/Chat";
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import FastImage from 'react-native-fast-image';
 
 GoogleSignin.configure({
   webClientId: "639044883262-mba3lj83uv4bssvh9deuoddorvpho27d.apps.googleusercontent.com",
@@ -26,7 +27,7 @@ async function onGoogleButtonPress() {
 
 export type RootStackParamList = {
   Rooms: undefined, // undefined as no params are passed
-  Chat: { name: string }; 
+  Chat: { chat: string ,avatar: string }; 
 };
 
 const Stack = createStackNavigator<RootStackParamList>()
@@ -77,8 +78,8 @@ function App(): JSX.Element {
           
           initialRouteName = "Rooms">
           
-          <Stack.Screen name = "Rooms" component = { Rooms } ></Stack.Screen>
-          <Stack.Screen name = "Chat" component = { Chat } ></Stack.Screen>
+          <Stack.Screen name = "Rooms" component = { Rooms }/>
+          <Stack.Screen name = "Chat" component = { Chat } />
         </Stack.Navigator>
       </NavigationContainer>
       );
