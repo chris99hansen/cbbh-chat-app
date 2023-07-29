@@ -166,7 +166,22 @@ export default function Screen({ navigation }: Props): JSX.Element {
             return(
             <TouchableOpacity style = { styles.button } onPress = { () => {
                 navigation.navigate("Chat", { chat: item.item.name, avatar: avatar})}}>
-                <Text style = { styles.text }>{ item.item.name }</Text>
+                <View style = {{flex:1}}>
+                    <Text style = { styles.text }>{ item.item.name }</Text>
+                    <Text style = { styles.textInfo }>{ item.item.name }</Text>
+                </View>
+                
+                <Image
+                    source = { require('../images/chevron.png') }
+                    style = {{
+                        alignSelf:"center",
+                        
+                        maxHeight: 30,
+                        maxWidth: 30,
+                        flex:1,
+                        resizeMode: "contain" }}
+                />
+
             </TouchableOpacity>
             )
         }}
@@ -178,7 +193,7 @@ const styles = StyleSheet.create({
     text: {
         fontSize: 30,
         fontWeight: 'bold',
-        margin: 10,
+        marginHorizontal: 10,
         color: (`#000000`),
         textShadowColor:'#585858',
         textShadowOffset:{width: 1, height: 1},
@@ -186,9 +201,7 @@ const styles = StyleSheet.create({
     },
     textInfo: {
         fontSize: 20,
-        fontWeight: 'bold',
-        margin: 10,
-        textAlign: "center",
+        marginHorizontal: 10,
         color: (`#000000`),
         textShadowColor:'#585858',
         textShadowOffset:{width: 1, height: 1},
@@ -202,6 +215,7 @@ const styles = StyleSheet.create({
         backgroundColor:"#E4E6EB",
         paddingVertical: 20,
         margin: 10,
-        borderRadius: 10
+        borderRadius: 10,
+        flexDirection:"row",
     },
 })
