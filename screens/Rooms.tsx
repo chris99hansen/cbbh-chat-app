@@ -25,14 +25,14 @@ type Props = {
 };
 
 export default function Screen({ navigation }: Props): JSX.Element {
-    
+
     const [avatar, setAvatar] = useState("https://firebasestorage.googleapis.com/v0/b/cbbhchatapp.appspot.com/o/defaultAvatar.png?alt=media&token=b4cfce19-7cd8-4b01-934d-f23da5371ee8");
-    
+
     // an array to store chats to join
     const [chats, setChats] = useState<chat[]>([])
     // a boolean to indicate to the user that the program is loading
     const [refreshing, setRefreshing] = React.useState(true);
-    
+
     /*
      * it deletes all chats stored, and finds the listed chats in the firestore collection "chats"
      * it sorts the rooms so the top chat is the chat room with the last recieved message
@@ -41,15 +41,15 @@ export default function Screen({ navigation }: Props): JSX.Element {
     async function getChats() {
         setRefreshing(true)
         setChats([]);
-        let newChats:chat[] = []
+        let newChats: chat[] = []
         let docs = await firestore().collection('chats').get()
-        for (const foundChat of docs.docs){
+        for (const foundChat of docs.docs) {
             const t = await firestore()
-            .collection(foundChat.data().chat)
-            .orderBy("date","desc")
-            .limit(1)
-            .get()
-            if (t.size > 0){
+                .collection(foundChat.data().chat)
+                .orderBy("date", "desc")
+                .limit(1)
+                .get()
+            if (t.size > 0) {
                 newChats.push({
                     name: foundChat.data().chat,
                     color: foundChat.data().color,
@@ -58,7 +58,7 @@ export default function Screen({ navigation }: Props): JSX.Element {
                 })
             }
         }
-        newChats.sort((a,b) => b.date.getTime() - a.date.getTime());
+        newChats.sort((a, b) => b.date.getTime() - a.date.getTime());
         setChats(newChats);
         setRefreshing(false);
     }
@@ -68,48 +68,58 @@ export default function Screen({ navigation }: Props): JSX.Element {
         getChats();
     }
 
-    function uploadAvatar(img:ImagePickerResponse):void{
+    function uploadAvatar(img: ImagePickerResponse): void {
         // if the user cancelled, do nothing
         if (!img.didCancel) {
             setRefreshing(true)
             img.assets?.forEach(asset => {
                 if (asset.uri) {
-                    const ref = storage().ref(Date.now().toString()+firebase.auth().currentUser?.email);
+                    const ref = storage().ref(Date.now().toString() + firebase.auth().currentUser?.email);
                     const task = ref.putFile(asset.uri);
                     task.then(() => {
-                        ref.getDownloadURL().then((link) => {
-                            firestore().collection('users').where("email", "==",firebase.auth().currentUser?.email).get().then(doc => {
-                                if(doc.size === 0){
+                        ref.getDownloadURL().then((link) => { 
+                            firestore()
+                            .collection('users')
+                            .where("email", "==", firebase
+                            .auth().currentUser?.email)
+                            .get()
+                            .then(doc => {
+                                if (doc.size === 0) {
                                     // if there is no user stored create one
-                                    firestore().collection('users').add({email:firebase.auth().currentUser?.email,image:link}).then(
-                                        ()=> setAvatar(link))
-                                }else{
+                                    firestore()
+                                    .collection('users')
+                                    .add({ email: firebase.auth().currentUser?.email, image: link })
+                                    .then(() => setAvatar(link))
+                                } else {
                                     //updates the image link
                                     doc.forEach(element => {
-                                        element.ref.update("image",link).then(
-                                            ()=> setAvatar(link))
+                                        element
+                                        .ref
+                                        .update("image", link)
+                                        .then(() => setAvatar(link))
                                     });
                                 }
                             })
                         }
-                    )})
-                }else {
-                    Alert.alert("","Error occured with the image",[{text:"ok"}])
+                        )
+                    })
+                } else {
+                    Alert.alert("", "Error occured with the image", [{ text: "ok" }])
                 }
             })
         }
     }
 
     function uploadAvatarAlert(): void {
-        Alert.alert("","Update avatar image from", [
-            { text:"Cancel" },
-            { text:"Camera", onPress: () => {
+        Alert.alert("", "Update avatar image from", [
+            { text: "Cancel" },
+            {text: "Camera", onPress: () => {
                 // send image from camera
                 launchCamera({ mediaType: "photo" }, (img) => {
                     uploadAvatar(img)
                 });
             }},
-            { text:"Gallery", onPress: () => {
+            {text: "Gallery", onPress: () => {
                 // send image from Gallery 
                 launchImageLibrary({ mediaType: "photo", selectionLimit: 1 }, (img) => {
                     uploadAvatar(img)
@@ -117,80 +127,84 @@ export default function Screen({ navigation }: Props): JSX.Element {
             }}])
     }
 
-    //fetch stored avatar picture
+    // fetch stored avatar picture
     useEffect(() => {
-        firestore().collection('users').where("email", "==" ,firebase.auth().currentUser?.email).get().then(doc => {
-            navigation.setOptions({headerRight: () => (
-                <TouchableOpacity
-                style = { {height: 55,width: 55,} }
-                onPress={() => uploadAvatarAlert()}
-                >
-                <FastImage  style = {{
-                    height: 55,
-                    width: 55,
-                    maxHeight:"100%",
-                    maxWidth:"100%",
-                    borderRadius:100,
-                }}
-                    source={{
-                        uri: avatar,
-                        priority: FastImage.priority.normal,
-                    }}
-                    resizeMode={FastImage.resizeMode.contain}
-                    />
-                </TouchableOpacity>
-            )})
-            doc.forEach(element => {
-                setAvatar( element.data().image )
-            });
+        firestore()
+        .collection('users')
+        .where("email", "==", firebase.auth().currentUser?.email)
+        .get()
+        .then(doc => {
+            navigation.setOptions({
+                headerRight: () => (
+                    <TouchableOpacity
+                        style = {{ height: 55, width: 55, }}
+                        onPress = {() => uploadAvatarAlert()}
+                    >
+                        <FastImage style = {{
+                            height: 55,
+                            width: 55,
+                            maxHeight: "100%",
+                            maxWidth: "100%",
+                            borderRadius: 100,
+                        }}
+                            source = {{
+                                uri: avatar,
+                                priority: FastImage.priority.normal,
+                            }}
+                            resizeMode = {FastImage.resizeMode.contain}
+                        />
+                    </TouchableOpacity>
+                )
+            })
+            doc.forEach(element => { setAvatar(element.data().image) });
         })
-        //after a image upload the list also have to have the correct avatar link
+        // after a image upload the list also have to have the correct avatar link
         getChats();
     }, [avatar]);
-    
+
     // this is only called once on a mount and not on each render
     useEffect(() => {
         const name = firebase.auth().currentUser?.displayName
-        if(name){
-            navigation.setOptions({ headerTitle: name})
-        }else{
-            navigation.setOptions({ headerTitle: "no display name"})
+        if (name) {
+            navigation.setOptions({ headerTitle: name })
+        } else {
+            navigation.setOptions({ headerTitle: "no display name" })
         }
     }, []);
-    
-    // the view that the user sees
-    return (<SafeAreaView style = { styles.SafeAreaView }>
-        <FlashList 
-        estimatedItemSize = { 8 }
-        data = { chats }
-        refreshControl = { <RefreshControl refreshing = { refreshing } onRefresh = { onRefresh } />}
-        renderItem = { item => {
-            // each chat is a big button, clicking on it will enter the chat displayed
-            return(
-            <TouchableOpacity style = { [styles.button,
-                {backgroundColor: item.item.color === undefined ? "#E4E6EB":item.item.color}] } onPress = { () => {
-                navigation.navigate("Chat", { chat: item.item.name, avatar: avatar})}}>
-                <View style = {{flex:1}}>
-                    <Text style = { styles.text }>{ item.item.name }</Text>
-                    <Text style = { styles.textInfo }>{ item.item.description }</Text>
-                </View>
-                
-                <Image
-                    source = { require('../images/chevron.png') }
-                    style = {{
-                        alignSelf:"center",
-                        
-                        maxHeight: 30,
-                        maxWidth: 30,
-                        flex:1,
-                        resizeMode: "contain" }}
-                />
 
-            </TouchableOpacity>
-            )
-        }}
+    // the view that the user sees
+    return (<SafeAreaView style = {styles.SafeAreaView}>
+        <FlashList
+            estimatedItemSize = { 8 }
+            data = { chats }
+            refreshControl = { <RefreshControl refreshing = { refreshing } onRefresh = { onRefresh } /> }
+            renderItem = {item => {
+                // each chat is a big button, clicking on it will enter the chat displayed
+                return (
+                    <TouchableOpacity style = {[styles.button,
+                    { backgroundColor: item.item.color === undefined ? "#E4E6EB" : item.item.color }]} onPress = {() => {
+                        navigation.navigate("Chat", { chat: item.item.name, avatar: avatar })
+                    }}>
+                        <View style = {{ flex: 1 }}>
+                            <Text style = {styles.text}>{item.item.name}</Text>
+                            <Text style = {styles.textInfo}>{item.item.description}</Text>
+                        </View>
+
+                        <Image
+                            source = { require('../images/chevron.png') }
+                            style = {{
+                                alignSelf: "center",
+                                maxHeight: 30,
+                                maxWidth: 30,
+                                flex: 1,
+                                resizeMode: "contain"
+                            }}
+                        />
+                    </TouchableOpacity>
+                )
+            }}
         />
-        </SafeAreaView>)
+    </SafeAreaView>)
 }
 
 const styles = StyleSheet.create({
@@ -199,9 +213,9 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginHorizontal: 10,
         color: (`#000000`),
-        textShadowColor:'#585858',
-        textShadowOffset:{width: 1, height: 1},
-        textShadowRadius:1,
+        textShadowColor: '#585858',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 1,
     },
     textInfo: {
         fontSize: 20,
@@ -216,6 +230,6 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         margin: 10,
         borderRadius: 10,
-        flexDirection:"row",
+        flexDirection: "row",
     },
 })
