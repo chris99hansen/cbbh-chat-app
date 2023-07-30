@@ -9,10 +9,11 @@ import FastImage from 'react-native-fast-image';
 import { ImagePickerResponse, launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 
-
 interface chat {
     name: string;
     date: Date;
+    color: string;
+    description: string;
 }
 
 type ScreenNavigationProp = StackNavigationProp<
@@ -51,6 +52,8 @@ export default function Screen({ navigation }: Props): JSX.Element {
             if (t.size > 0){
                 newChats.push({
                     name: foundChat.data().chat,
+                    color: foundChat.data().color,
+                    description: foundChat.data().description,
                     date: new Date(t.docs[0].data().date.toDate() as Date)
                 })
             }
@@ -164,11 +167,12 @@ export default function Screen({ navigation }: Props): JSX.Element {
         renderItem = { item => {
             // each chat is a big button, clicking on it will enter the chat displayed
             return(
-            <TouchableOpacity style = { styles.button } onPress = { () => {
+            <TouchableOpacity style = { [styles.button,
+                {backgroundColor: item.item.color === undefined ? "#E4E6EB":item.item.color}] } onPress = { () => {
                 navigation.navigate("Chat", { chat: item.item.name, avatar: avatar})}}>
                 <View style = {{flex:1}}>
                     <Text style = { styles.text }>{ item.item.name }</Text>
-                    <Text style = { styles.textInfo }>{ item.item.name }</Text>
+                    <Text style = { styles.textInfo }>{ item.item.description }</Text>
                 </View>
                 
                 <Image
@@ -203,16 +207,12 @@ const styles = StyleSheet.create({
         fontSize: 20,
         marginHorizontal: 10,
         color: (`#000000`),
-        textShadowColor:'#585858',
-        textShadowOffset:{width: 1, height: 1},
-        textShadowRadius:1,
     },
     SafeAreaView: {
         flex: 1,
         backgroundColor: (`#FFFFFF`),
     },
     button: {
-        backgroundColor:"#E4E6EB",
         paddingVertical: 20,
         margin: 10,
         borderRadius: 10,

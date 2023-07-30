@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView, StyleSheet, Text } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import auth, { firebase } from '@react-native-firebase/auth';
 import Rooms from "./screens/Rooms";
 import Chat from "./screens/Chat";
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
-import FastImage from 'react-native-fast-image';
+import SplashScreen from 'react-native-splash-screen'
 
 GoogleSignin.configure({
   webClientId: "639044883262-mba3lj83uv4bssvh9deuoddorvpho27d.apps.googleusercontent.com",
@@ -33,12 +33,19 @@ export type RootStackParamList = {
 const Stack = createStackNavigator<RootStackParamList>()
 
 function App(): JSX.Element {
+
   const [user, setUser] = useState();
   
   // handle user state changes
   function onAuthStateChanged(user: any) {
     setUser(user);
   }
+  useEffect(() => {
+    setTimeout(() => {
+      SplashScreen.hide();
+    }, 3000);
+  }, []);
+
   useEffect(() => {
     const subscriber = auth().onAuthStateChanged((user) => {
       if (user) {
